@@ -1,0 +1,21 @@
+# Ignore environment files
+.env
+finance_ai.db
+finance_ai.db-shm
+finance_ai.db-wal
+eval_report.csv
+answers.jsonl
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore node modules (if using Node.js)
+node_modules/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
