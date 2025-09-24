@@ -3,9 +3,9 @@ import sqlite3
 from sqlite3 import Connection
 from app.obs.traces import init_traces
 
-from . import db as _self # type: ignore
+from . import db as _self  # type: ignore
 
-
+# SQL schema for initializing the database tables and indexes
 SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS facts (
@@ -50,10 +50,15 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 """
 
+# Singleton connection object
 _CON: Connection | None = None
 
 
 def get_con(db_path: str) -> Connection:
+    """
+    Get a singleton SQLite connection to the database at db_path.
+    Sets row_factory to sqlite3.Row for dict-like access.
+    """
     global _CON
     if _CON is None:
         _CON = sqlite3.connect(db_path, check_same_thread=False)
@@ -62,6 +67,9 @@ def get_con(db_path: str) -> Connection:
 
 
 def init_db(con: Connection):
+    """
+    Initialize the database schema and tracing tables.
+    """
     with con:
         con.executescript(SCHEMA_SQL)
     init_traces(con)

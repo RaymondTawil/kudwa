@@ -1,10 +1,14 @@
 from __future__ import annotations
 from fastapi import APIRouter
 
+# Create a FastAPI router for health and root endpoints
 router = APIRouter(tags=["health"])
 
 @router.get("/")
 def root():
+    """
+    Root endpoint providing service status and a list of available endpoints.
+    """
     return {
         "ok": True,
         "service": "Finance AI API",
@@ -21,4 +25,7 @@ def root():
 
 @router.get("/health")
 def health():
-    return {"status":"ok"}
+    """
+    Simple health check endpoint.
+    """
+    return {"status": "ok"}

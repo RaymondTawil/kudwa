@@ -1,12 +1,16 @@
 from __future__ import annotations
-from typing import Any, Dict, List, Tuple
 from sqlite3 import Connection
+from typing import Any, Dict, List, Tuple
 from app.repositories.facts import insert_fact
 from app.repositories.metrics import upsert_metric
 from app.utils.normalization import safe_float, ym_key
 
 
 def _qb_walk_rows(rows: List[dict], header_group: str | None = None) -> List[dict]:
+    """
+    Recursively flattens QuickBooks report rows into a list of account/value dicts.
+    Handles nested row groups and summary rows.
+    """
     flat: List[dict] = []
     for r in rows:
         if 'Rows' in r and r.get('Rows', {}).get('Row'):
@@ -32,6 +36,9 @@ def _qb_walk_rows(rows: List[dict], header_group: str | None = None) -> List[dic
 
 
 def _categorize(acc: str) -> str:
+    """
+    Categorizes an account name into revenue, cogs, expense, or other.
+    """
     a = (acc or '').lower()
     if 'income' in a or a.startswith('revenue') or 'sales' in a: return 'revenue'
     if 'cost of goods sold' in a or 'payroll expense - cos' in a or 'direct parts' in a: return 'cogs'
@@ -41,11 +48,14 @@ def _categorize(acc: str) -> str:
 
 
 def ingest_quickbooks(con: Connection, payload: Dict[str, Any]):
+    """
+    Ingests a QuickBooks report payload into the database.
+    Flattens the report, categorizes accounts, inserts facts, and computes metrics.
+    """
     data = payload.get('data') or payload
     header = data.get('Header', {})
     cols = data.get('Columns', {}).get('Column', [])
     rows = data.get('Rows', {}).get('Row', [])
-
 
     month_cols: List[Tuple[str | None, str | None]] = []
     for c in cols[1:]:
@@ -59,11 +69,9 @@ def ingest_quickbooks(con: Connection, payload: Dict[str, Any]):
 
     flat = _qb_walk_rows(rows)
 
-
     inserted = 0
     metrics_inserted = 0
     periods_set = set()
-
 
     for item in flat:
         acc = item['account'] or 'Unknown'
@@ -93,7 +101,6 @@ def ingest_quickbooks(con: Connection, payload: Dict[str, Any]):
         expenses = row['expenses'] or 0.0
         upsert_metric(con, period_end=pe, source='quickbooks', revenue=revenue, cogs=cogs, expenses=expenses, net_profit=None)
         metrics_inserted += 1
-
 
     return {
         'source': 'quickbooks',

@@ -1,17 +1,31 @@
 from __future__ import annotations
-from typing import Any, List, Dict,Optional
 from sqlite3 import Connection
 from app.utils.normalization import ym_key
+from typing import Any, List, Dict, Optional
 
 
-def insert_fact(con: Connection, period_start: str | None, period_end: str | None, source: str, account: str, category: str, kind: str, amount: float):
+def insert_fact(
+    con: Connection,
+    period_start: str | None,
+    period_end: str | None,
+    source: str,
+    account: str,
+    category: str,
+    kind: str,
+    amount: float,
+):
+    """
+    Insert a fact record into the facts table.
+    Computes the month key from period_end.
+    """
     mk = ym_key(period_end) if period_end else None
     with con:
         con.execute(
-        """
-        INSERT INTO facts(period_start, period_end, month_key, source, account, category, kind, amount)
-        VALUES(?,?,?,?,?,?,?,?)
-        """, (period_start, period_end, mk, source, account, category, kind, amount)
+            """
+            INSERT INTO facts(period_start, period_end, month_key, source, account, category, kind, amount)
+            VALUES(?,?,?,?,?,?,?,?)
+            """,
+            (period_start, period_end, mk, source, account, category, kind, amount)
         )
 
 
@@ -21,6 +35,10 @@ def expenses_increase_top(
     source: Optional[str] = None,
     limit: int = 5,
 ) -> Dict[str, Any]:
+    """
+    Returns the top accounts with the largest increase in expenses for a given year.
+    Optionally filters by source and limits the number of results.
+    """
     params_firstlast: List[Any] = [str(year)]
     src_clause = ""
     if source:
@@ -37,7 +55,7 @@ def expenses_increase_top(
     ).fetchone()
 
     first = row["first"] if row else None
-    last  = row["last"]  if row else None
+    last = row["last"] if row else None
     if not first or not last:
         return {"year": year, "first_month": first, "last_month": last, "top": []}
 

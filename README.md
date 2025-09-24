@@ -21,7 +21,7 @@ git clone git@github.com:RaymondTawil/kudwa.git && cd kudwa
 2. **Create `.env` at the repo root** and set at least your API key (LLM is optional; rule-based still works):
 
 ```
-# LLM (optional but recommended)
+# LLM
 OPENAI_API_KEY=sk-...
 
 # LLM defaults (you can force a model per request with X-Model)

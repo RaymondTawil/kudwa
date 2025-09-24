@@ -1,16 +1,23 @@
 import os, math
 import requests
+
+# Base URL for API requests (default: localhost)
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 
 
 def _get(url):
+    """
+    Helper to GET a URL and assert HTTP 200, returning the JSON response.
+    """
     r = requests.get(f"{BASE_URL}{url}", timeout=30)
     assert r.status_code == 200, r.text
     return r.json()
 
 
 def test_summary_consistency(ensure_ingested):
-    """Direct data eval: gross_profit ≈ revenue - cogs per period."""
+    """
+    Test that gross_profit ≈ revenue - cogs for each period in the summary.
+    """
     out = _get("/api/v1/metrics/summary")
     rows = out["rows"]
     assert len(rows) > 0
@@ -22,23 +29,34 @@ def test_summary_consistency(ensure_ingested):
 
 
 def test_trend_shape(ensure_ingested):
+    """
+    Test that the trend endpoint returns a non-empty list of points with correct fields.
+    """
     t = _get("/api/v1/metrics/trend?metric=revenue")
     assert t["metric"] == "revenue"
     assert isinstance(t["points"], list) and len(t["points"]) > 0
     for p in t["points"]:
         assert "period_end" in p and "value" in p
 
+
 def test_expense_increase_empty_year_returns_200():
+    """
+    Test that requesting a year with no data returns HTTP 200 and an empty 'top' list.
+    """
     import requests, os
     BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
     # Pick a year likely not in data; adjust if needed
     r = requests.get(f"{BASE_URL}/api/v1/expenses/top_increase?year=2099", timeout=30)
     assert r.status_code == 200, r.text
     body = r.json()
-    assert set(body.keys()) >= {"year","first_month","last_month","top"}
+    assert set(body.keys()) >= {"year", "first_month", "last_month", "top"}
     assert body["top"] == []  # empty, not error
 
+
 def test_expense_increase_has_fields(ensure_ingested):
+    """
+    Test that the top expense increase endpoint always returns the correct shape and types.
+    """
     out = _get("/api/v1/metrics/summary")
     years = sorted({int(r["period_end"][0:4]) for r in out["rows"]})
     assert len(years) >= 1

@@ -1,11 +1,11 @@
 from __future__ import annotations
+from sqlite3 import Connection
 from fastapi import APIRouter, Query, Depends
-from sqlite3 import Connection, DatabaseError
 from app.services.analytics import anomalies
 from app.repositories.facts import expenses_increase_top
 from app.db.db_con import db_conn
 
-
+# Create a FastAPI router for analytics endpoints
 router = APIRouter(prefix="/api/v1", tags=["analytics"])
 
 @router.get("/expenses/top_increase")
@@ -15,6 +15,10 @@ def expenses_top_increase_api(
     limit: int = 5,
     con: Connection = Depends(db_conn),
 ):
+    """
+    API endpoint to get accounts with the largest increase in expenses for a given year.
+    Returns a valid response shape even if no data is found.
+    """
     # Fast existence check to avoid 500s on empty years
     params = [str(year)]
     src_sql = ""
@@ -31,7 +35,7 @@ def expenses_top_increase_api(
         # Always return a valid shape (HTTP 200) even if no data
         return {"year": year, "first_month": None, "last_month": None, "top": []}
 
-    # Normal path
+    # Normal path: return top expense increases
     return expenses_increase_top(con, year, source, limit)
 
 @router.get("/analytics/anomalies")
@@ -42,4 +46,7 @@ def anomalies_api(
     z: float = 2.0,
     con: Connection = Depends(db_conn),
 ):
+    """
+    API endpoint to detect anomalies in a given metric for a year/source using z-score.
+    """
     return anomalies(con, metric, year, source, z)

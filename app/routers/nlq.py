@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Header
 from sqlite3 import Connection
-from app.domain.models import NLQRequest, NLQResponse
-from app.services.nlq import nlq as nlq_service
+from fastapi import APIRouter, Depends, Header
 from app.config import settings
 from app.db.db_con import db_conn
+from app.services.nlq import nlq as nlq_service
+from app.domain.models import NLQRequest, NLQResponse
 
+# Create a FastAPI router for NLQ (Natural Language Query) endpoints
 router = APIRouter(prefix="/api/v1", tags=["nlq"])
 
 @router.post("/nlq", response_model=NLQResponse)
@@ -13,6 +14,11 @@ def nlq(
     con: Connection = Depends(db_conn),
     x_model: str | None = Header(default=None, convert_underscores=False),
 ):
+    """
+    API endpoint for natural language queries (NLQ).
+    Accepts a NLQRequest and returns a NLQResponse with the answer and trace.
+    Optionally allows model override via the X-Model header.
+    """
     out = nlq_service(
         con=con,
         query=req.query,
