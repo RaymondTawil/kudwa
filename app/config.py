@@ -5,11 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#EMBED_MODEL=text-embedding-3-small
-#CHAT_MODEL=gpt-4o-mini
-#MODEL_VARIANTS="gpt-4o-mini,gpt-4o"
-#API_BASE_URL = "http://localhost:8000"
-
 class Settings(BaseModel):
     db_path: str = os.getenv("DB_PATH", "app/db/finance_ai.db")
     auto_ingest: bool = os.getenv("AUTO_INGEST", "0") == "1"
